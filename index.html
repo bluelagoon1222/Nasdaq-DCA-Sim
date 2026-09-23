@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>나스닥 적립매수 시뮬레이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--orange:#F58220;--orange-dk:#CB6015;--navy:#043B72;--soft:#FAB072;--hl:#D7D7D7;--surf:#ECEFF4;--subtle:#F7F8FA;--hair:#CDCECB;--hair2:#E5E4E1;--ink:#1A1A1A;--body:#3D3D3D;--muted:#6C6C6C;--muted2:#84888B;--up:#2E8540;--down:#C62828;--warn:#D4A017}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:#fff;color:var(--body);font-family:'Noto Sans KR','Inter',system-ui,sans-serif;font-size:16px;line-height:1.6}
+.num,td.n,th.n,.kpi-v,.big{font-family:'Inter','Noto Sans KR',sans-serif;font-variant-numeric:tabular-nums}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+a{color:var(--navy)}
+h1{font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.3px;margin:0;line-height:1.25}
+h2{font-size:21px;font-weight:700;color:var(--ink);margin:0 0 6px}
+h3{font-size:17px;font-weight:700;color:var(--ink);margin:22px 0 8px}
+p{margin:6px 0}
+.top{border-bottom:1px solid var(--hair2);padding:22px 0 0;background:#fff}
+.title-row{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.meta{font-size:13px;color:var(--muted);font-family:'Inter','Noto Sans KR',sans-serif}
+.controls{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:flex-end;margin:16px 0 14px}
+.ctl{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted)}
+.ctl select,.ctl input[type=number],.ctl input[type=month],.form select,.form input{font:inherit;font-size:15px;color:var(--ink);padding:6px 8px;border:1px solid var(--hair);border-radius:2px;background:#fff;min-width:0}
+.ctl input[type=number]{width:120px}
+.seg{display:inline-flex;border:1px solid var(--hair);border-radius:2px;overflow:hidden}
+.seg button{font:inherit;font-size:14px;padding:6px 11px;border:0;border-right:1px solid var(--hair);background:#fff;color:var(--muted);cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--orange);color:#fff}
+.seg button:hover:not(.on){background:var(--subtle);color:var(--ink)}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);cursor:pointer;padding:6px 0}
+.toggle input{width:18px;height:18px;accent-color:var(--orange);margin:0}
+.tabs{display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{font:inherit;font-size:15px;font-weight:500;padding:10px 16px;border:0;border-bottom:3px solid transparent;background:none;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--orange);font-weight:700}
+main{padding:22px 0 60px}
+.panel.hidden{display:none}
+.rule{height:1px;background:var(--orange);margin:26px 0 12px}
+.lead{color:var(--body);margin:0 0 14px;max-width:70ch}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.kpi{border:1px solid var(--hair2);padding:12px 14px;background:#fff}
+.kpi-l{font-size:12.5px;color:var(--muted);letter-spacing:.2px}
+.kpi-v{font-size:22px;font-weight:700;color:var(--ink);line-height:1.2;margin-top:2px}
+.kpi-v.o{color:var(--orange)}.kpi-v.b{color:var(--navy)}
+.kpi-s{font-size:12.5px;color:var(--muted);margin-top:2px}
+.pos{color:var(--up)}.neg{color:var(--down)}
+.chart{position:relative;height:300px;margin:10px 0 6px}
+.chart.tall{height:340px}
+@media (max-width:640px){.chart{height:240px}.chart.tall{height:280px}h1{font-size:22px}.kpi-v{font-size:19px}.tabs button{padding:10px 9px;font-size:14px}.wrap{padding:0 14px}.big{font-size:34px}}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.dt{border-collapse:collapse;width:100%;font-size:14px;border:1px solid var(--hair);min-width:560px}
+table.dt th{background:var(--soft);color:var(--ink);font-weight:700;padding:8px 10px;text-align:left;border-bottom:1px solid var(--hair);white-space:nowrap}
+table.dt td{padding:7px 10px;border-bottom:1px solid var(--hair2);white-space:nowrap}
+table.dt tr:nth-child(even) td{background:var(--subtle)}
+table.dt tr:hover td{background:var(--surf)}
+table.dt td.n,table.dt th.n{text-align:right}
+table.dt tr.best td{background:var(--hl);font-weight:700}
+table.dt td.c{text-align:center}
+table.dt.opt{font-size:13px;min-width:0}
+table.dt.opt td:nth-child(2),table.dt.opt td:nth-child(3){white-space:normal;min-width:150px}
+table.dt.opt th{white-space:normal;line-height:1.3;vertical-align:bottom}
+.note{font-size:13.5px;color:var(--muted);line-height:1.55;margin:8px 0}
+.note li{margin:3px 0}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 14px;margin:12px 0;padding:14px;background:var(--subtle);border:1px solid var(--hair2)}
+.form label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted)}
+.form label span.h{font-size:11.5px;color:var(--muted2)}
+.form .full{grid-column:1/-1}
+.btn{font:inherit;font-size:14px;font-weight:500;padding:8px 16px;border:0;border-radius:2px;background:var(--orange);color:#fff;cursor:pointer}
+.btn:hover{background:var(--orange-dk)}
+.btn.sm{padding:4px 10px;font-size:13px}
+.btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--hair)}
+.btn.ghost:hover{background:var(--subtle)}
+.big{font-size:40px;font-weight:700;color:var(--orange);line-height:1.1}
+.verdict{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+@media (max-width:720px){.verdict{grid-template-columns:1fr}}
+.card{border:1px solid var(--hair);padding:16px 18px;background:#fff}
+.card.o{border-color:var(--orange)}
+.badge{display:inline-block;font-size:13px;font-weight:700;padding:2px 9px;border-radius:2px;color:#fff;background:var(--muted2)}
+.badge.up{background:var(--orange)}.badge.down{background:var(--navy)}
+dl.facts{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:8px 0;font-size:14px}
+dl.facts dt{color:var(--muted)}dl.facts dd{margin:0;color:var(--ink);text-align:right;font-family:'Inter','Noto Sans KR',sans-serif;font-variant-numeric:tabular-nums}
+.heat td{text-align:center;min-width:56px}
+.summary{background:var(--subtle);border-left:3px solid var(--orange);padding:10px 14px;font-size:14.5px;margin:10px 0;white-space:pre-wrap}
+.status{padding:30px 0;color:var(--muted)}
+footer{border-top:1px solid var(--hair2);padding:18px 0 40px;font-size:12.5px;color:var(--muted);line-height:1.6}
+.sub{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.hint{font-size:12.5px;color:var(--muted2)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="title-row">
+      <h1>나스닥 적립매수 시뮬레이터</h1>
+      <div class="meta" id="meta">데이터 불러오는 중…</div>
+    </div>
+    <div class="controls">
+      <div class="ctl"><span>종목</span>
+        <select id="target"><option value="QQQ">QQQ (달러)</option><option value="TIGER">TIGER 미국나스닥100 (원화)</option></select></div>
+      <div class="ctl"><span id="amountLabel">월 매수금액 (달러)</span><input type="number" id="amount" value="1000" min="1" step="100"></div>
+      <div class="ctl"><span>기간 (최근 N년 · 완결된 달 기준)</span>
+        <div class="seg" id="periodSeg"><button data-m="60">5년</button><button data-m="120" class="on">10년</button><button data-m="180">15년</button><button data-m="240">20년</button><button data-m="all">전체</button></div></div>
+      <div class="ctl"><span>시작 연월 직접 지정</span><input type="month" id="startYM"></div>
+      <div class="ctl"><span>&nbsp;</span><label class="toggle" id="krwWrap"><input type="checkbox" id="krw"> 원화 환산으로 보기</label></div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button data-t="1" class="on">① 매수일</button>
+      <button data-t="2">② 매수 주기</button>
+      <button data-t="3">③ 가변 적립</button>
+      <button data-t="4">④ 이번 달 매수금액</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="status" class="status">데이터를 불러오고 있습니다.</div>
+
+  <!-- ① 매수일 -->
+  <section id="tab1" class="panel hidden">
+    <h2>매월 며칠에 사는 것이 좋았는가</h2>
+    <p class="lead">같은 금액을 매월 1회, 같은 날짜에 매수했을 때의 결과입니다. 비거래일은 다음 거래일로 이월하고, '말일'은 그 달의 마지막 거래일입니다. 배당은 재투자(수정종가 기준)로 가정합니다.</p>
+    <div class="kpis" id="k1"></div>
+    <div class="chart"><canvas id="c1"></canvas></div>
+    <div class="scroll" id="t1"></div>
+    <ul class="note">
+      <li><b>최종평가액</b>은 같은 날 평가하므로 이른 날짜가 시장에 며칠 더 머물러 상승장에서 유리하게 나옵니다. 그 시간 효과를 걷어낸 순수 날짜 효과는 <b>월평균가 대비 매수단가</b>(음수 = 그 달 평균보다 싸게 매수)로 봅니다.</li>
+      <li><b>롤링 10년 상위 2위 비율</b>은 데이터 전 기간에서 10년 창을 한 달씩 옮겨가며 7개 매수일의 순위를 매긴 결과입니다. 이 비율이 낮으면 '최고일'은 그 기간에만 맞았던 우연일 가능성이 큽니다.</li>
+      <li>매수일에 따른 차이는 통상 1~2% 안쪽입니다. 월말~월초에 수익률이 집중되는 현상(turn-of-the-month)이 알려져 있어 월 후반 매수가 이론상 미세하게 유리할 수 있고, 급여일(25일)과도 맞습니다.</li>
+    </ul>
+  </section>
+
+  <!-- ② 매수 주기 -->
+  <section id="tab2" class="panel hidden">
+    <h2>월 1회 · 격주 · 주 1회 — 연 투입금이 같을 때</h2>
+    <p class="lead">연간 총 투입금을 똑같이 맞춘 뒤(월 1,000달러 = 격주 약 461달러 = 주 약 231달러) 주기만 바꾼 결과입니다. 참고선으로 연초 일시납과 최초 일시납을 함께 둡니다.</p>
+    <div class="controls">
+      <div class="ctl"><span>월 1회 매수일</span><select id="buyDay2"></select></div>
+      <div class="ctl"><span>주 1회·격주 요일 (차트·표 기준)</span><select id="weekday"><option value="1">월요일</option><option value="2">화요일</option><option value="3">수요일</option><option value="4">목요일</option><option value="5">금요일</option></select></div>
+    </div>
+    <div class="kpis" id="k2"></div>
+    <div class="scroll" id="t2"></div>
+    <h3>요일별 결과</h3>
+    <div class="scroll" id="t2w"></div>
+    <h3>평가액 추이</h3>
+    <div class="chart tall"><canvas id="c2"></canvas></div>
+    <ul class="note">
+      <li>상승 추세에서는 월·격주·주 사이 차이가 매우 작습니다. 평균매입단가가 거의 같기 때문입니다. 주기보다 중단 없이 지속하는 것이 결과를 좌우합니다.</li>
+      <li>일시납은 '목돈이 있으면 나눠 살 필요가 있는가'의 참고선입니다. 과거 데이터에서 연초 일시납이 12개월 분할보다 대체로 우세한 것은 상승 확률이 높은 자산을 더 오래 보유하기 때문이며, 분할의 가치는 최악의 시점에 몰아 사는 위험을 피하는 데 있습니다.</li>
+    </ul>
+  </section>
+
+  <!-- ③ 가변 적립 -->
+  <section id="tab3" class="panel hidden">
+    <h2>하락하면 더 사고, 오르면 덜 사는 규칙</h2>
+    <p class="lead">매월 정해진 금액이 유입되는 급여형을 가정합니다. 덜 산 달의 남은 돈이 현금풀에 쌓이고, 더 사는 달은 그 현금 한도 안에서 집행합니다. 정액 적립과의 비교는 '매월 같은 금액 유입'이라는 동일한 현금흐름 기준이며, 최종평가액에는 미집행 현금(단기 국채금리 이자 포함)이 들어갑니다.</p>
+    <div class="form" id="ruleForm">
+      <label>트리거 지표
+        <select id="r_type">
+          <option value="a">전월 매수일 대비 등락률 (μ 중심 밴드)</option>
+          <option value="b">52주 고점 대비 낙폭</option>
+          <option value="c">200일 이동평균 이격도</option>
+          <option value="g">장기 추세선 이격도</option>
+          <option value="f">VIX 수준 (공포·탐욕형)</option>
+        </select></label>
+      <label class="ra">밴드 중심
+        <select id="r_center"><option value="mu">장기 평균 μ (롤링)</option><option value="fixed">고정값 (연 %)</option><option value="zero">0 (전월 대비 등락 그대로)</option></select></label>
+      <label class="ra rmu">μ 산출 기간 (나스닥 종합)
+        <select id="r_muW"><option value="10">10년</option><option value="20">20년</option><option value="30" selected>30년</option><option value="all">전 기간(1971~)</option></select></label>
+      <label class="ra rfixed">고정 연 수익률 (%)<input type="number" id="r_fixed" value="10" step="1"></label>
+      <label class="rg">추세선 기간
+        <select id="r_trendW"><option value="10">10년</option><option value="20">20년</option><option value="30" selected>30년</option><option value="all">전 기간</option></select></label>
+      <label class="ra rc rg">1단계 폭 k1 <span class="h" id="kHint">전월 대비: μ ± k1 (%p)</span><input type="number" id="r_k1" value="3" step="1" min="0"></label>
+      <label class="ra rc rg">2단계 폭 k2 <span class="h">비우면 2단계 없음</span><input type="number" id="r_k2" value="5" step="1" min="0"></label>
+      <label class="rb">증액 1단계 낙폭 (%)<input type="number" id="r_t1" value="10" step="1"></label>
+      <label class="rb">증액 2단계 낙폭 (%) <span class="h">비우면 없음</span><input type="number" id="r_t2" value="20" step="1"></label>
+      <label class="rb">감액: 고점 대비 이내 (%)<input type="number" id="r_s" value="2" step="1" min="0"></label>
+      <label class="rf">증액 1단계 VIX 이상<input type="number" id="r_v1" value="25" step="1"></label>
+      <label class="rf">증액 2단계 VIX 이상 <span class="h">비우면 없음</span><input type="number" id="r_v2" value="35" step="1"></label>
+      <label class="rf">감액: VIX 이하<input type="number" id="r_w" value="15" step="1"></label>
+      <label>증액 배수 1단계<input type="number" id="r_u1" value="1.3" step="0.1" min="1" max="3"></label>
+      <label>증액 배수 2단계<input type="number" id="r_u2" value="1.6" step="0.1" min="1" max="3"></label>
+      <label>감액 배수 1단계<input type="number" id="r_d1" value="0.7" step="0.1" min="0" max="1"></label>
+      <label>감액 배수 2단계<input type="number" id="r_d2" value="0.5" step="0.1" min="0" max="1"></label>
+      <label>배수 형태<select id="r_shape"><option value="step">계단식</option><option value="ramp">경사식 (1단계→2단계 비례)</option></select></label>
+      <label>연간 예산 방식
+        <select id="b_mode"><option value="B">B 현금풀 이월형</option><option value="A">A 잔여예산 재배분형 (연 총액 고정)</option></select></label>
+      <label class="bB">현금풀 상한 (개월분)<input type="number" id="b_cap" value="3" step="1" min="0"></label>
+      <label>초기 현금풀 (개월분)<input type="number" id="b_seed" value="0" step="1" min="0"></label>
+      <label>매수일<select id="buyDay3"></select></label>
+    </div>
+    <div class="kpis" id="k3"></div>
+    <h3>월별 집행 금액</h3>
+    <div class="chart tall"><canvas id="c3a"></canvas></div>
+    <h3>평가액 추이 — 가변 vs 정액</h3>
+    <div class="chart"><canvas id="c3b"></canvas></div>
+    <h3>예산 연도별 집행액</h3>
+    <div class="scroll" id="t3y"></div>
+
+    <div class="rule"></div>
+    <h2>최적화 결과 (QQQ · 매수일 25일 · 전 기간 격자 탐색)</h2>
+    <p class="lead" id="optLead">GitHub Actions 가 매일 수천 개 파라미터 조합을 평가합니다. 표본 내(1999~2015)에서 정액 대비 초과 IRR의 '고원 점수'(인접 파라미터 평균)로 고르고, 롤링 10년 승률 50% 이상을 조건으로 두며, 표본 외(2016~현재)는 검증용으로만 표시합니다. 행을 '적용'하면 위 규칙 입력에 들어갑니다.</p>
+    <div class="sub seg" id="famSeg"></div>
+    <div class="scroll" id="tOpt"></div>
+    <h3 id="heatTitle">히트맵 — 1단계 폭 × 증액 배수 (표본 내 초과 IRR, %p)</h3>
+    <div class="scroll" id="tHeat"></div>
+    <ul class="note">
+      <li>연 투입금이 같으면 가변 적립은 소폭의 타이밍 조정입니다. 표본 외 초과수익이 연 수십 bp 수준이면 정상 범위이며, 이 규칙의 가치는 하락장에서 매수를 이어갈 근거를 주는 데 있습니다.</li>
+      <li>최근 10년(2016~)은 2020·2022년 두 번의 V자 반등이 있어 '하락 시 증액'이 유리하게 보이기 쉬운 표본입니다. 표본 내(닷컴 붕괴·2008년 포함) 결과와 롤링 승률을 함께 보십시오.</li>
+      <li>A(잔여예산 재배분형)는 12번째 달에 잔액을 몰아 사므로 감액이 잦은 상승장에서는 그 자체로 불리한 요소가 있습니다.</li>
+    </ul>
+  </section>
+
+  <!-- ④ 이번 달 매수금액 -->
+  <section id="tab4" class="panel hidden">
+    <h2>이번 달은 얼마를 사야 하는가</h2>
+    <p class="lead">③에서 설정한 규칙과 예산 방식을 그대로 적용해, 최근 종가 기준으로 이번 달 매수금액을 계산합니다. 적립 개시월부터 규칙대로 집행했다고 가정한 현금풀 잔액을 쓰거나, 실제 잔액을 직접 입력할 수 있습니다.</p>
+    <div class="form">
+      <label>적립 개시 연월<input type="month" id="calcStart"></label>
+      <label>현금풀 잔액 직접 입력 <span class="h">비우면 규칙대로 집행했다고 가정</span><input type="number" id="calcCash" placeholder="예: 1500" step="1"></label>
+      <label>이번 달 누적 집행 여부<select id="calcDone"><option value="0">아직 매수 전</option><option value="1">이미 매수함 (다음 달 계산)</option></select></label>
+      <div class="full hint" id="calcRuleText"></div>
+    </div>
+    <div class="verdict">
+      <div class="card o">
+        <div class="kpi-l">이번 달 매수금액</div>
+        <div class="big" id="calcAmt">–</div>
+        <div class="kpi-s" id="calcAmtSub"></div>
+        <div style="margin-top:10px" id="calcBadge"></div>
+        <dl class="facts" id="calcFacts"></dl>
+      </div>
+      <div class="card">
+        <div class="kpi-l">기준 정보 (최근 종가 시점)</div>
+        <dl class="facts" id="calcMarket"></dl>
+      </div>
+    </div>
+    <div class="summary" id="calcSummary"></div>
+    <button class="btn ghost sm" id="copyBtn">문구 복사</button>
+    <ul class="note">
+      <li>'전월 매수일 대비'는 직전 매수 예정일의 종가와 최근 종가를 비교합니다. 매수일 이전에 보면 이번 달 판정이 매수일까지 바뀔 수 있습니다.</li>
+      <li>자동매수 서비스가 정액만 지원하면 가변 매수는 수동 주문이 필요합니다. 계산된 금액을 그대로 주문하십시오.</li>
+    </ul>
+  </section>
+</main>
+<footer><div class="wrap">과거 데이터에 기반한 시뮬레이션이며 미래 성과를 보장하지 않습니다. 수수료·세금은 반영하지 않았고, 배당은 재투자(수정종가)로 가정합니다. 내부 참고용 자료입니다. 데이터: Yahoo Finance, FRED, CNN. </div></footer>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
